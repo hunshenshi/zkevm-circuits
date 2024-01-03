@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use eth_types::Field;
 use halo2_proofs::{
     circuit::{Chip, Region, Value},
-    plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells, Fixed},
+    plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells, Fixed, Selector},
     poly::Rotation,
 };
 
@@ -13,6 +13,7 @@ pub struct IsEqualConfig {
     a: Column<Advice>,
     b: Column<Advice>,  
     zero: Column<Fixed>,
+    selector: Selector,
 }
 
 /// Chip that compares equality between two expressions.
@@ -51,6 +52,7 @@ impl<F: Field> IsEqualChip<F> {
             a,
             b,
             zero,
+            selector,
         }
     }
 
@@ -126,6 +128,7 @@ mod tests {
             layouter.assign_region(
                 || "witness",
                 |mut region| {
+                    let _ = chip.config.selector.enable(&mut region, 0);
                     region.assign_advice(|| "a", chip.config.a, 0, || self.a)?;
                     region.assign_advice(|| "b", chip.config.b, 0, || self.b)?;
                     region.assign_fixed(|| "zero", chip.config.zero, 0, || Value::<F>::known(F::from(0)))?;
